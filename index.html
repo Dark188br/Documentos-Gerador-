@@ -718,3 +718,157 @@
                             <option value="PE">Pernambuco (PE)</option>
                             <option value="PI">Piauí (PI)</option>
                             <option 
+                                <script>
+/* ====== BANCO DE USUÁRIOS (EXEMPLO) ====== */
+const users = [
+  { code: "dono", password: "123", name: "Dono do Sistema", role: "DONO" },
+  { code: "adm", password: "123", name: "Administrador", role: "ADM" },
+  { code: "mod", password: "123", name: "Moderador", role: "MOD" },
+  { code: "staff", password: "123", name: "Staff", role: "STAFF" }
+];
+
+/* ====== ESTADO DO SISTEMA ====== */
+let currentUser = null;
+let documentos = [];
+
+/* ====== LOGIN ====== */
+function fazerLogin() {
+  const code = document.getElementById("loginCode").value.trim();
+  const pass = document.getElementById("loginPassword").value.trim();
+  const errorBox = document.getElementById("loginError");
+
+  const user = users.find(u => u.code === code && u.password === pass);
+
+  if (!user) {
+    errorBox.textContent = "❌ Código ou senha inválidos!";
+    errorBox.classList.add("show");
+    return;
+  }
+
+  currentUser = user;
+
+  // Atualiza UI
+  document.getElementById("loginScreen").classList.add("hidden");
+  document.getElementById("mainContainer").classList.add("show");
+
+  document.getElementById("userName").textContent = user.name;
+  const badge = document.getElementById("userBadge");
+  badge.textContent = user.role;
+
+  badge.className = "user-badge";
+  if (user.role === "DONO") badge.classList.add("owner");
+  if (user.role === "ADM") badge.classList.add("admin");
+
+  // Mostra área de usuário
+  document.getElementById("userView").style.display = "block";
+
+  errorBox.classList.remove("show");
+}
+
+/* ====== LOGOUT ====== */
+function fazerLogout() {
+  currentUser = null;
+  document.getElementById("mainContainer").classList.remove("show");
+  document.getElementById("loginScreen").classList.remove("hidden");
+}
+
+/* ====== GERAR DOCUMENTO ====== */
+function gerarDocumento() {
+  if (!currentUser) return;
+
+  const tipoNome = document.getElementById("tipoNome").value;
+  let nome;
+
+  if (tipoNome === "customizado") {
+    nome = document.getElementById("nomeCustomizado").value.trim();
+    if (!nome) {
+      alert("Digite um nome!");
+      return;
+    }
+  } else {
+    nome = "Cidadão " + Math.floor(Math.random() * 10000);
+  }
+
+  const estado = document.getElementById("estado").value;
+  if (!estado) {
+    alert("Selecione o estado!");
+    return;
+  }
+
+  const doc = {
+    id: Date.now(),
+    nome,
+    estado,
+    criadoPor: currentUser.name,
+    cargo: currentUser.role,
+    data: new Date().toLocaleString()
+  };
+
+  documentos.push(doc);
+  alert("✅ Documento criado com sucesso!");
+  listarDocumentos();
+}
+
+/* ====== LISTAR DOCUMENTOS ====== */
+function listarDocumentos() {
+  const tbody = document.getElementById("docsBody");
+  if (!tbody) return;
+
+  tbody.innerHTML = "";
+
+  documentos.forEach(doc => {
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+      <td>${doc.id}</td>
+      <td>${doc.nome}</td>
+      <td>${doc.estado}</td>
+      <td>${doc.criadoPor}</td>
+      <td>${doc.data}</td>
+      <td>
+        ${currentUser.role === "DONO" ? `
+          <button onclick="editarDocumento(${doc.id})">✏️</button>
+          <button onclick="apagarDocumento(${doc.id})">🗑️</button>
+        ` : `<span>🔒 Sem permissão</span>`}
+      </td>
+    `;
+
+    tbody.appendChild(tr);
+  });
+}
+
+/* ====== EDITAR (SÓ DONO) ====== */
+function editarDocumento(id) {
+  if (currentUser.role !== "DONO") {
+    alert("❌ Só o DONO pode editar!");
+    return;
+  }
+
+  const doc = documentos.find(d => d.id === id);
+  const novoNome = prompt("Novo nome:", doc.nome);
+  if (novoNome) {
+    doc.nome = novoNome;
+    listarDocumentos();
+  }
+}
+
+/* ====== APAGAR (SÓ DONO) ====== */
+function apagarDocumento(id) {
+  if (currentUser.role !== "DONO") {
+    alert("❌ Só o DONO pode apagar!");
+    return;
+  }
+
+  if (!confirm("Tem certeza que deseja apagar?")) return;
+
+  documentos = documentos.filter(d => d.id !== id);
+  listarDocumentos();
+}
+
+/* ====== MOSTRAR / ESCONDER CAMPO NOME ====== */
+function toggleNomeCustom() {
+  const tipo = document.getElementById("tipoNome").value;
+  const group = document.getElementById("nomeCustomGroup");
+  group.style.display = tipo === "customizado" ? "block" : "none";
+}
+                        </script>
